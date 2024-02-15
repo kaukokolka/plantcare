@@ -10,7 +10,7 @@ http.createServer(function (req, res) {
     console.log(filename);
     fs.readFile(filename, function(err, data) {
         if (err) {
-            res.writeHead(404, {'Content-Type': 'text/html'});
+            res.writeHead(404, {'Content-Type': 'text/html; charset=utf-8'});
             return res.end("404 Not Found");
           }
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
