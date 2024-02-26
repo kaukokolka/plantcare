@@ -1,7 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var dt = require('./module.js');
-var yuri = require('url')
+var yuri = require('url');
 
 
 http.createServer(function (req, res) {
