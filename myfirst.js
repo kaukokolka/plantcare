@@ -1,21 +1,36 @@
-var http = require('http');
 var fs = require('fs');
 var dt = require('./module.js');
 var yuri = require('url');
+var path = require('path');
+var sqlite3 = require('sqlite3').verbose();
+var express = require('express');
+var app = express();
 
+app.use(express.urlencoded({ extended: true }));
+//NEED DB DEFINED
+//const db = new sqlite3.Database('./config/plantcarebook.db');
 
-http.createServer(function (req, res) {
-    var q = yuri.parse(req.url, true);
-    var filename = "public" + q.pathname;
-    console.log(filename);
-    fs.readFile(filename, function(err, data) {
-        if (err) {
-            res.writeHead(404, {'Content-Type': 'text/html; charset=utf-8'});
-            return res.end("404 Not Found");
-          }
-    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-    res.write(data);
-    //res.write("The date and time are currently: " + dt.dateTime() + "and you chose it to be" + q.year + " " + q.month);
-    res.end();
-    });    
-}).listen(8080);
+//const db = require('./config/db'); // Require the database connection
+
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+ });
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    db.get('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password], (err, row) => {
+        if (err || !row) {
+            res.send('Incorrect username or password');
+        } else {
+            res.send('User is validated!');
+        }
+    });
+});
+
+ app.use((req, res) => {
+    res.status(404).send('404 Not Found')
+ }); 
+
+ app.listen(8080, () => {
+    console.log(`Server listening`);
+});
