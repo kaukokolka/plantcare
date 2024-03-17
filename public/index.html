@@ -2,11 +2,11 @@
     <h1>Pieslēgties</h1>
     <form action="/login" method="post" style="width: 180px; margin: auto;">
         <label for="username">Lietotājvārds:</label>
-        <input type="text" id="username" placeholder="Username" required> <br/>
+        <input type="text" id="username" name="username" placeholder="Username" required> <br/>
         <label for="password">Parole:</label>
-        <input type="text" id="password" placeholder="Password" required>
+        <input type="text" id="password" name="password" placeholder="Password" required>
         <input type="submit" value="Iesniegt" style="margin: 10px 0;">
-        <p style="color:green; display:none;">User is validated!</p>
-        <p style="color:red; display:none;">Incorrect username or password</p>
+        <p id="validation" style="color:green; display:none;">User is validated!</p>
+        <p id="invalidation" style="color:red; display:none;">Incorrect username or password</p>
     </form>
 </div>

@@ -1,2 +1,5 @@
 
 *.db
+run.sh
+hello.js
+.DS_Store
