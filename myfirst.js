@@ -1,5 +1,5 @@
 var fs = require('fs');
-var dt = require('./module.js');
+var datpix = require('./module.js');
 var yuri = require('url');
 var path = require('path');
 var sqlite3 = require('sqlite3').verbose();
@@ -18,15 +18,32 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
  });
 
+ app.get('/datatest', function (req, res) {
+    res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
+ });
+
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     console.log(username, password);
+    console.log(typeof datpix.foo);
     db.get('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password], (err, row) => {
         if (err || !row) {
             res.send('Incorrect username or password');
         } else {
             res.send('User is validated!');
             console.log('User is validated!');
+        }
+    });
+});
+
+app.get('/datatest', (req, res) => {
+    db.all('SELECT * FROM Plants', (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            res.status(500).send('Internal Server Error');
+        } else {
+            // Send JSON response with fetched data
+            res.json(rows);
         }
     });
 });
