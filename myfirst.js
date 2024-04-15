@@ -18,7 +18,7 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
  });
 
- app.get('/datatest', function (req, res) {
+ app.get('/data', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
 
@@ -43,6 +43,7 @@ app.get('/datatest', (req, res) => {
             res.status(500).send('Internal Server Error');
         } else {
             // Send JSON response with fetched data
+            res.setHeader('Content-Type', 'application/json');
             res.json(rows);
         }
     });

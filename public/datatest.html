@@ -5,7 +5,7 @@
     <title>Display Data</title>
 </head>
 <body>
-    <h1>Data from SQLite Database</h1>
+    <h1>Data from Plant database</h1>
     <ul id="data-list"></ul>
 
     <script>
@@ -16,7 +16,7 @@
                 const dataList = document.getElementById('data-list');
                 data.forEach(item => {
                     const li = document.createElement('li');
-                    li.textContent = `${item.number}: ${item.name}`; // Adjust column names as per your table
+                    li.textContent = `${item.number}: ${item.name} located in "${item.schooltime_location}" during schooltime and "${item.summer_location}" during summer`; // Adjust column names as per your table
                     dataList.appendChild(li);
                 });
             })
