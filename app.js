@@ -5,6 +5,7 @@ var path = require('path');
 var sqlite3 = require('sqlite3').verbose();
 var express = require('express');
 var app = express();
+var session = require('express-session')
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -14,25 +15,47 @@ const db = new sqlite3.Database('./config/plantcarebook.db');
 
 // const db = require('./config/db');  Require the database connection
 
+app.use(session({
+    secret: 'secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } //CHANGE B4 PRODUCTION!!!
+}));
+
+const requireAuth = (req, res, next) => {
+    if (req.session.userId) {
+        next(); // User is authenticated, continue to next middleware
+    } else {
+        res.redirect('/login'); // User is not authenticated, redirect to login page
+    }
+}
+
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
  });
 
- app.get('/data', function (req, res) {
+ app.get('/data', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     console.log(username, password);
-    console.log(typeof datpix.foo);
+    console.log(datpix.foo());
     db.get('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password], (err, row) => {
-        if (err || !row) {
-            res.send('Incorrect username or password');
-        } else {
-            res.send('User is validated!');
-            console.log('User is validated!');
+        if (err)  {
+            console.error('internal server error after login:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
         }
+        if (!row) {
+            console.log('Incorrect username or password');
+            res.status(401).json({ error: 'Incorrect username or password' }); //401 unauthorized
+            return;
+        }
+        req.session.userId = userId; //NOT DFEFINED
+        console.log('User is validated!'); // Log successful login attempt
+        res.redirect('/data');
     });
 });
 
