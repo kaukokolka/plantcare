@@ -34,7 +34,7 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
  });
 
- app.get('/data', requireAuth, function (req, res) {
+ app.get('/datatest', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
 
@@ -53,14 +53,28 @@ app.post('/login', (req, res) => {
             res.status(401).json({ error: 'Incorrect username or password' }); //401 unauthorized
             return;
         }
-        req.session.userId = userId; //NOT DFEFINED
+        const userId = row.user_id;
+        req.session.userId = userId;
         console.log('User is validated!'); // Log successful login attempt
-        res.redirect('/data');
+        res.redirect('/datatest');
     });
 });
 
-app.get('/datatest', (req, res) => {
+app.get('/data', (req, res) => {
     db.all('SELECT * FROM Plants', (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            res.status(500).send('Internal Server Error');
+        } else {
+            // Send JSON response with fetched data
+            res.setHeader('Content-Type', 'application/json');
+            res.json(rows);
+        }
+    });
+});
+
+app.get('/username', (req, res) => {
+    db.all('SELECT username FROM Users', (err, rows) => {
         if (err) {
             console.error(err.message);
             res.status(500).send('Internal Server Error');

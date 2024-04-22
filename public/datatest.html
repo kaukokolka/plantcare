@@ -5,13 +5,14 @@
     <title>Display Data</title>
 </head>
 <body>
+    <span id="usern-display">Logged in as unknown</span>
     <h2>the following information is TOP SECRET! :O</h2>
     <h1>Data from Plant database</h1>
     <ul id="data-list"></ul>
 
     <script>
         // Fetch data from server and populate the HTML page
-        fetch('/datatest')
+        fetch('/data')
             .then(response => response.json())
             .then(data => {
                 const dataList = document.getElementById('data-list');
