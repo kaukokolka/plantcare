@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,6 +10,7 @@
     <h2>the following information is TOP SECRET! :O</h2>
     <h1>Data from Plant database</h1>
     <ul id="data-list"></ul>
+    <div id="link-list"></div>
 
     <script>
         // Fetch data from server and populate the HTML page
@@ -16,10 +18,15 @@
             .then(response => response.json())
             .then(data => {
                 const dataList = document.getElementById('data-list');
+                const linkList = document.getElementById('link-list');
                 data.forEach(item => {
                     const li = document.createElement('li');
+                    const a = document.createElement('a');
                     li.textContent = `${item.number}: ${item.name} located in "${item.schooltime_location}" during schooltime and "${item.summer_location}" during summer`; // Adjust column names as per your table
+                    a.innerHTML = 'link is here?'
+                    a.href = `/plants/${item.plant_id}`
                     dataList.appendChild(li);
+                    li.appendChild(a);
                 });
             })
             .catch(error => console.error('Error:', error));

@@ -7,6 +7,7 @@ var express = require('express');
 var app = express();
 var session = require('express-session')
 
+app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
 //./run.sh
@@ -34,14 +35,32 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
  });
 
- app.get('/datatest', requireAuth, function (req, res) {
+app.get('/datatest', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
+
+app.get('/plants/:id', requireAuth, (req,res) => {
+    const plantId = req.params.id;
+    db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
+        if (err) {
+            console.error('internal server error querying ID:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
+        }
+        if (!row) {
+            console.log('Plant not Found')
+            res.status(404).json({ error: '404 Not Found' }); //404 not found
+            return;
+        }
+        console.log('success!')
+        res.render('plant.ejs', { plant: row });
+    });
+});
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     console.log(username, password);
-    console.log(datpix.foo());
+    //console.log(datpix.foo());
     db.get('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password], (err, row) => {
         if (err)  {
             console.error('internal server error after login:', err);
@@ -60,7 +79,7 @@ app.post('/login', (req, res) => {
     });
 });
 
-app.get('/data', (req, res) => {
+app.get('/data', requireAuth, (req, res) => {
     db.all('SELECT * FROM Plants', (err, rows) => {
         if (err) {
             console.error(err.message);
@@ -73,18 +92,18 @@ app.get('/data', (req, res) => {
     });
 });
 
-app.get('/username', (req, res) => {
-    db.all('SELECT username FROM Users', (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            res.status(500).send('Internal Server Error');
-        } else {
-            // Send JSON response with fetched data
-            res.setHeader('Content-Type', 'application/json');
-            res.json(rows);
-        }
-    });
-});
+//app.get('/username', (req, res) => {
+//    db.all('SELECT * FROM Users', (err, rows) => { //FINISH HERE WHERE username = ?
+//        if (err) {
+//            console.error(err.message);
+//            res.status(500).send('Internal Server Error');
+//        } else {
+//            // Send JSON response with fetched data
+//            res.setHeader('Content-Type', 'application/json');
+//            res.json(rows);
+//        }
+//    });
+//});
 
  app.use((req, res) => {
     res.status(404).send('404 Not Found')
