@@ -9,5 +9,9 @@
     <p>Summer Location: <%= plant.summer_location %></p>
     <p>Schooltime Location: <%= plant.schooltime_location %></p>
     <p>Watering Frequency: <%= plant.frequency %></p>
+    <form action="/log" method="post">
+        <input type="text" id="loginput" name="loginput">
+        <input type="submit" value="Iesniegt">
+    </form>
 </body>
 </html>
