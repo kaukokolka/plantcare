@@ -30,6 +30,12 @@
                 });
             })
             .catch(error => console.error('Error:', error));
-    </script>
+        fetch('/username') //no wrok?
+        .then(response => response.json())
+            .then(data => {
+               // const usernameShower = document.getElementById('username-shower')
+                console.log(data)
+        });
+    </script>   
 </body>
 </html>

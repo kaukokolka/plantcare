@@ -39,6 +39,24 @@ app.get('/datatest', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
 
+app.get('/username', requireAuth, function (req, res) { //wrok?
+    const userId = req.session.userId
+    db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {
+        if (err) {
+            console.error('internal server error querying ID:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
+        }
+        if (!row) {
+            console.log('User not Found')
+            res.status(404).json({ error: '404 Not Found' }); //404 not found
+            return;
+        }
+        res.setHeader('Content-Type', 'application/json');
+        res.json(row);
+    });
+});
+
 app.get('/plants/:id', requireAuth, (req,res) => {
     const plantId = req.params.id;
     db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
