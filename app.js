@@ -5,13 +5,14 @@ var path = require('path');
 var sqlite3 = require('sqlite3').verbose();
 var express = require('express');
 var app = express();
-var session = require('express-session')
+var session = require('express-session');
+var crypto = require('crypto');
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
 //./run.sh
-//NEED DB DEFINED
+
 const db = new sqlite3.Database('./config/plantcarebook.db');
 
 // const db = require('./config/db');  Require the database connection
@@ -31,16 +32,24 @@ const requireAuth = (req, res, next) => {
     }
 }
 
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
- });
+const requireNoAuth = (req, res, next) => {
+    if (req.session.userId) {
+        res.redirect('/'); //User is authenticated, send to HOME page
+    } else {
+        next(); // User isn't authenticated, may use login
+    }
+}
 
-app.get('/datatest', requireAuth, function (req, res) {
+app.get('/', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
 
-app.get('/username', requireAuth, function (req, res) { //wrok?
-    const userId = req.session.userId
+app.get('/login', requireNoAuth, function (req, res) {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+ });
+
+app.get('/user', requireAuth, function (req, res) {
+    const userId = req.session.userId;
     db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {
         if (err) {
             console.error('internal server error querying ID:', err);
@@ -48,10 +57,11 @@ app.get('/username', requireAuth, function (req, res) { //wrok?
             return;
         }
         if (!row) {
-            console.log('User not Found')
+            console.log('User not Found');
             res.status(404).json({ error: '404 Not Found' }); //404 not found
             return;
         }
+        console.log('success! username!');
         res.setHeader('Content-Type', 'application/json');
         res.json(row);
     });
@@ -66,17 +76,18 @@ app.get('/plants/:id', requireAuth, (req,res) => {
             return;
         }
         if (!row) {
-            console.log('Plant not Found')
+            console.log('Plant not Found');
             res.status(404).json({ error: '404 Not Found' }); //404 not found
             return;
         }
-        console.log('success!')
+        console.log('success! id!')
         res.render('plant.ejs', { plant: row });
     });
 });
 
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
+app.post('/validate', (req, res) => {
+    const { username } = req.body;
+    const password = sha256(req.body.password);
     console.log(username, password);
     //console.log(datpix.foo());
     db.get('SELECT * FROM Users WHERE username = ? AND password = ?', [username, password], (err, row) => {
@@ -93,7 +104,7 @@ app.post('/login', (req, res) => {
         const userId = row.user_id;
         req.session.userId = userId;
         console.log('User is validated!'); // Log successful login attempt
-        res.redirect('/datatest');
+        res.redirect('/');
     });
 });
 
@@ -123,8 +134,12 @@ app.get('/data', requireAuth, (req, res) => {
 //    });
 //});
 
+function sha256(hashable) {
+  return crypto.createHash('sha256').update(hashable).digest('hex');
+}
+
  app.use((req, res) => {
-    res.status(404).send('404 Not Found')
+    res.status(404).send('404 Not Found');
  });
 
  app.listen(8080, () => {

@@ -6,7 +6,7 @@
     <title>Display Data</title>
 </head>
 <body>
-    <span id="usern-display">Logged in as unknown</span>
+    <span id="usern-shower">Logged in as unknown</span>
     <h2>the following information is TOP SECRET! :O</h2>
     <h1>Data from Plant database</h1>
     <ul id="data-list"></ul>
@@ -15,27 +15,28 @@
     <script>
         // Fetch data from server and populate the HTML page
         fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                const dataList = document.getElementById('data-list');
-                const linkList = document.getElementById('link-list');
-                data.forEach(item => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    li.textContent = `${item.number}: ${item.name} located in "${item.schooltime_location}" during schooltime and "${item.summer_location}" during summer`; // Adjust column names as per your table
-                    a.innerHTML = 'link is here?'
-                    a.href = `/plants/${item.plant_id}`
-                    dataList.appendChild(li);
-                    li.appendChild(a);
-                });
-            })
-            .catch(error => console.error('Error:', error));
-        fetch('/username') //no wrok?
         .then(response => response.json())
-            .then(data => {
-               // const usernameShower = document.getElementById('username-shower')
-                console.log(data)
-        });
-    </script>   
+        .then(data => {
+          const dataList = document.getElementById('data-list');
+          const linkList = document.getElementById('link-list');
+          data.forEach(item => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            li.textContent = `${item.number}: ${item.name} located in "${item.schooltime_location}" during schooltime and "${item.summer_location}" during summer`; // Adjust column names as per your table
+            a.innerHTML = 'link is here?'
+            a.href = `/plants/${item.plant_id}`
+            dataList.appendChild(li);
+            li.appendChild(a);
+          });
+        })
+        .catch(error => console.error('Error:', error));
+        fetch('/user')
+        .then(response => response.json())
+        .then(data => {
+          const usernameShower = document.getElementById('usern-shower');
+          usernameShower.innerHTML = `Logged in as ${data.username}`;
+        })
+        .catch(error => console.error('Error:', error));
+    </script>
 </body>
 </html>
