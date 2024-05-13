@@ -48,42 +48,9 @@ app.get('/login', requireNoAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
  });
 
-app.get('/user', requireAuth, function (req, res) {
-    const userId = req.session.userId;
-    db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {
-        if (err) {
-            console.error('internal server error querying ID:', err);
-            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
-            return;
-        }
-        if (!row) {
-            console.log('User not Found');
-            res.status(404).json({ error: '404 Not Found' }); //404 not found
-            return;
-        }
-        console.log('success! username!');
-        res.setHeader('Content-Type', 'application/json');
-        res.json(row);
-    });
-});
-
-app.get('/plants/:id', requireAuth, (req,res) => {
-    const plantId = req.params.id;
-    db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
-        if (err) {
-            console.error('internal server error querying ID:', err);
-            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
-            return;
-        }
-        if (!row) {
-            console.log('Plant not Found');
-            res.status(404).json({ error: '404 Not Found' }); //404 not found
-            return;
-        }
-        console.log('success! id!')
-        res.render('plant.ejs', { plant: row });
-    });
-});
+app.get('/register', requireNoAuth, function (req, res) {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+ });
 
 app.post('/validate', (req, res) => {
     const { username } = req.body;
@@ -105,6 +72,58 @@ app.post('/validate', (req, res) => {
         req.session.userId = userId;
         console.log('User is validated!'); // Log successful login attempt
         res.redirect('/');
+    });
+});
+
+app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT-PASS, +CHECK SYMBOLS
+    const { username } = req.body;
+    const password = sha256(req.body.password);
+    console.log(username, password);
+    db.run('INSERT INTO Users(username, password) VALUES(?, ?)', [username, password], function(err) {
+        if (err)  {
+            console.error('internal server error after creating user:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
+        }
+        console.log('User is created!'); // Log successful account creation attempt
+        res.redirect('/login');
+    });
+});
+
+app.get('/user', requireAuth, function (req, res) {
+    const userId = req.session.userId;
+    db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {
+        if (err) {
+            console.error('internal server error querying ID:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
+        }
+        if (!row) {
+            console.log('User not Found');
+            res.status(404).json({ error: '404 Not Found' }); //404 not found
+            return;
+        }
+        console.log('user: success!');
+        res.setHeader('Content-Type', 'application/json');
+        res.json(row);
+    });
+});
+
+app.get('/plants/:id', requireAuth, (req,res) => {
+    const plantId = req.params.id;
+    db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
+        if (err) {
+            console.error('internal server error querying ID:', err);
+            res.status(500).json({ error: 'Internal Server Error' }); //500 internal server error
+            return;
+        }
+        if (!row) {
+            console.log('Plant not Found');
+            res.status(404).json({ error: '404 Not Found' }); //404 not found
+            return;
+        }
+        console.log('id: success!')
+        res.render('plant.ejs', { plant: row });
     });
 });
 
