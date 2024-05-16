@@ -113,6 +113,20 @@ app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT
     });
 });
 
+app.post('/newlog', requireAuth, (req, res) => { 
+    var timestamp = new Date().toISOString();
+    const userId = req.session.userId;
+    const { plantId, logType, logInput } = req.body;
+      db.run('INSERT INTO Logs(plant_id, user_id, time, type, content) VALUES(?, ?, ?, ?, ?)', [plantId, userId, timestamp, logType, logInput], function(err) { //create new row(log) in db
+          if (err)  {
+              console.error('internal server error after creating log:', err);
+              res.status(500).send('Internal Server Error'); //500 internal server error
+              return;
+          }
+          console.log('Log is created!'); // Log successful log creation attempt
+      });
+    });
+
 app.get('/user', requireAuth, function (req, res) { //for fetching user data. to be used during active session
     const userId = req.session.userId;
     db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {

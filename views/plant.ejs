@@ -9,9 +9,17 @@
     <p>Summer Location: <%= plant.summer_location %></p>
     <p>Schooltime Location: <%= plant.schooltime_location %></p>
     <p>Watering Frequency: <%= plant.frequency %></p>
-    <form action="/log" method="post">
-        <input type="text" id="loginput" name="loginput">
+    <form action="/newlog" method="post">
+        <input type="hidden" name="plantId" value="<%= plant.plant_id %>">
+        <select id="logtype" name="logType">
+            <option value="Laistīšana">Laistīšana</option>
+            <option value="Cits">Cits</option>
+        </select>
+        <input type="text" id="loginput" name="logInput" placeholder="Papildus informācija(nav obligāta)">
         <input type="submit" value="Iesniegt">
     </form>
+    <ul id="data-list"></ul>
+    <script>
+    </script>
 </body>
 </html>

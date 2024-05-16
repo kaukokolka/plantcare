@@ -10,15 +10,12 @@
     <h2>the following information is TOP SECRET! :O</h2>
     <h1>Data from Plant database</h1>
     <ul id="data-list"></ul>
-    <div id="link-list"></div>
-
     <script>
         // Fetch data from server and populate the HTML page
         fetch('/data')
         .then(response => response.json())
         .then(data => {
           const dataList = document.getElementById('data-list');
-          const linkList = document.getElementById('link-list');
           data.forEach(item => {
             const li = document.createElement('li');
             const a = document.createElement('a');
