@@ -4,7 +4,7 @@
     <title>Plant info</title>
 </head>
 <body>
-    <h1>Hello, I am <%= plant.name %>!</h1>  
+    <h1>Hello, I am <%= plant.name %>!</h1>
     <p>Plant Name: <%= plant.name %></p>
     <p>Summer Location: <%= plant.summer_location %></p>
     <p>Schooltime Location: <%= plant.schooltime_location %></p>
@@ -18,8 +18,15 @@
         <input type="text" id="loginput" name="logInput" placeholder="Papildus informācija(nav obligāta)">
         <input type="submit" value="Iesniegt">
     </form>
-    <ul id="data-list"></ul>
-    <script>
-    </script>
+    <h1>Logs for Plant: <%= plant.name %></h1>
+    <ul>
+        <% logs.forEach(log => { %>
+            <li>
+                <strong>Time:</strong> <%= log.time %><br>
+                <strong>Type:</strong> <%= log.type %><br>
+                <strong>Content:</strong> <%= log.content %>
+            </li>
+        <% }) %>
+    </ul>
 </body>
 </html>

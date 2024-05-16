@@ -113,7 +113,7 @@ app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT
     });
 });
 
-app.post('/newlog', requireAuth, (req, res) => { 
+app.post('/newlog', requireAuth, (req, res) => {
     var timestamp = new Date().toISOString();
     const userId = req.session.userId;
     const { plantId, logType, logInput } = req.body;
@@ -160,7 +160,15 @@ app.get('/plants/:id', requireAuth, (req,res) => { //dynamically render EJS temp
             return;
         }
         console.log('id: success!')
-        res.render('plant.ejs', { plant: row });
+        db.all('SELECT * FROM Logs WHERE plant_id = ?', [plantId], (err, logs) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).send('Internal Server Error');
+                return;
+            }
+            console.log('logs: success!')
+            res.render('plant.ejs', { logs: logs, plant: row });
+        });
     });
 });
 
