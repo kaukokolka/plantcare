@@ -41,6 +41,22 @@ const requireNoAuth = (req, res, next) => {
     }
 }
 
+const requireAdmin = (req, res, next) => {
+    const userId = req.session.userId;
+    db.get('SELECT * FROM Users WHERE user_id = ? AND admin = 1', [userId], (err, row) => {
+    if (err) {
+        console.error('Error querying user:', err);
+        res.status(500).send('Internal Server Error');
+        return;
+      }
+      if (!row) {
+          res.redirect('/'); //User isn't admin, send to homepage
+      } else {
+          next(); // User is admin, may use page
+      }
+    });
+  };
+
 app.get('/', requireAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
  });
@@ -143,19 +159,30 @@ app.post('/newlog', requireAuth, (req, res) => {
       });
     });
 
-  app.post('/newplant', requireAuth, (req, res) => {
-      const { number, name, summerLocation, schooltimeLocation, frequency } = req.body;
-      console.log(name, summerLocation, schooltimeLocation, frequency);
-        db.run('INSERT INTO Plants(number, name, summer_location, schooltime_location, frequency) VALUES(?, ?, ?, ?, ?)', [number, name, summerLocation, schooltimeLocation, frequency], function(err) { //create new row(log) in db
-            if (err)  {
-                console.error('internal server error after creating plant:', err);
-                res.status(500).send('Internal Server Error'); //500 internal server error
-                return;
-            }
-            console.log('Plant is created!'); // Log successful log creation attempt
-            res.redirect('/'); //reload back into page, now with the new log
-        });
+app.post('/newplant', requireAuth, (req, res) => {
+    const { number, name, summerLocation, schooltimeLocation, frequency } = req.body;
+    console.log(name, summerLocation, schooltimeLocation, frequency);
+    db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => { //check if username already exists
+      if (err) {
+        console.error('internal server error querying number:', err);
+        res.status(500).send('Internal Server Error'); //500 internal server error
+        return;
+      }
+      if (row) { //check whether a row with such number already exists
+        res.status(400).send('Augs ar šādu numuru jau pastāv, lūdzu izvēlieties citu.')
+        return;
+      }
+      db.run('INSERT INTO Plants(number, name, summer_location, schooltime_location, frequency) VALUES(?, ?, ?, ?, ?)', [number, name, summerLocation, schooltimeLocation, frequency], function(err) { //create new row(log) in db
+          if (err)  {
+              console.error('internal server error after creating plant:', err);
+              res.status(500).send('Internal Server Error'); //500 internal server error
+              return;
+          }
+          console.log('Plant is created!'); // Log successful log creation attempt
+          res.redirect('/'); //reload back into page, now with the new log
       });
+    });
+  });
 
 app.get('/user', requireAuth, function (req, res) { //for fetching user data. to be used during active session
     const userId = req.session.userId;
