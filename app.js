@@ -10,6 +10,7 @@ var crypto = require('crypto');
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 //./run.sh
 
@@ -52,7 +53,7 @@ app.get('/register', requireNoAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
  });
 
-app.post('/validate', (req, res) => {
+app.post('/validate', (req, res) => { //checks inputted data on whether such user exists and if so, starts a session for the user
     const { username } = req.body;
     const password = sha256(req.body.password);
     console.log(username, password);
@@ -73,6 +74,17 @@ app.post('/validate', (req, res) => {
         console.log('User is validated!'); // Log successful login attempt
         res.redirect('/');
     });
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('logout unsuccessful:', err);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.redirect('/login');
+  }); //end session
 });
 
 app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT-PASS, +CHECK SYMBOLS
@@ -115,8 +127,11 @@ app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT
 
 app.post('/newlog', requireAuth, (req, res) => {
     var timestamp = new Date().toISOString();
+    console.log(timestamp)
     const userId = req.session.userId;
+    console.log(userId);
     const { plantId, logType, logInput } = req.body;
+    console.log(plantId, logType, logInput);
       db.run('INSERT INTO Logs(plant_id, user_id, time, type, content) VALUES(?, ?, ?, ?, ?)', [plantId, userId, timestamp, logType, logInput], function(err) { //create new row(log) in db
           if (err)  {
               console.error('internal server error after creating log:', err);
@@ -124,8 +139,23 @@ app.post('/newlog', requireAuth, (req, res) => {
               return;
           }
           console.log('Log is created!'); // Log successful log creation attempt
+          res.redirect('/plants/' + plantId); //reload back into page, now with the new log
       });
     });
+
+  app.post('/newplant', requireAuth, (req, res) => {
+      const { number, name, summerLocation, schooltimeLocation, frequency } = req.body;
+      console.log(name, summerLocation, schooltimeLocation, frequency);
+        db.run('INSERT INTO Plants(number, name, summer_location, schooltime_location, frequency) VALUES(?, ?, ?, ?, ?)', [number, name, summerLocation, schooltimeLocation, frequency], function(err) { //create new row(log) in db
+            if (err)  {
+                console.error('internal server error after creating plant:', err);
+                res.status(500).send('Internal Server Error'); //500 internal server error
+                return;
+            }
+            console.log('Plant is created!'); // Log successful log creation attempt
+            res.redirect('/'); //reload back into page, now with the new log
+        });
+      });
 
 app.get('/user', requireAuth, function (req, res) { //for fetching user data. to be used during active session
     const userId = req.session.userId;

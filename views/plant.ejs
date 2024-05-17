@@ -4,6 +4,9 @@
     <title>Plant info</title>
 </head>
 <body>
+    <span id="usern-shower">Logged in as </span>
+    <a href="/logout">iziet</a>
+    <a href="/">Atgriezties augu sarakstā</a>
     <h1>Hello, I am <%= plant.name %>!</h1>
     <p>Plant Name: <%= plant.name %></p>
     <p>Summer Location: <%= plant.summer_location %></p>
@@ -16,7 +19,7 @@
             <option value="Cits">Cits</option>
         </select>
         <input type="text" id="loginput" name="logInput" placeholder="Papildus informācija(nav obligāta)">
-        <input type="submit" value="Iesniegt">
+        <input type="submit" id="submit" value="Iesniegt">
     </form>
     <h1>Logs for Plant: <%= plant.name %></h1>
     <ul>
@@ -28,5 +31,14 @@
             </li>
         <% }) %>
     </ul>
+    <script>
+    fetch('/user')
+    .then(response => response.json())
+    .then(data => {
+      const usernameShower = document.getElementById('usern-shower');
+      usernameShower.innerHTML = `Logged in as ${data.username}`;
+    })
+    .catch(error => console.error('Error:', error));
+    </script>
 </body>
 </html>

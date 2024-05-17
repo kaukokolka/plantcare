@@ -6,9 +6,21 @@
     <title>Display Data</title>
 </head>
 <body>
-    <span id="usern-shower">Logged in as unknown</span>
+    <span id="usern-shower">Logged in as </span>
+    <a href="/logout">iziet</a>
     <h2>the following information is TOP SECRET! :O</h2>
     <h1>Data from Plant database</h1>
+    <div>
+      <h2>Pievienot augu</h2>
+      <form action="/newplant" method="post">
+          <input type="number" id="number" name="number">
+          <input type="text" id="name" name="name" placeholder="">
+          <input type="text" id="summerlocation" name="summerLocation" placeholder="">
+          <input type="text" id="schooltimelocation" name="schooltimeLocation" placeholder="">
+          <input type="number" id="frequency" name="frequency">
+          <input type="submit" id="submit" value="Pievienot augu">
+      </form>
+    </div>
     <ul id="data-list"></ul>
     <script>
         // Fetch data from server and populate the HTML page
