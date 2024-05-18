@@ -1,0 +1,37 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plant info</title>
+</head>
+<body>
+    <span id="usern-shower">Logged in as </span>
+    <a href="/logout">iziet</a>
+    <a href="/">Atgriezties augu sarakstā</a>
+    <h1>Rediģēt augu "<%= plant.name %>"</h1>
+    <form action="/editplant" method="post">
+      <input type="hidden" name="plantId" value="<%= plant.plant_id %>" required>
+      <input type="hidden" name="oldNumber" value="<%= plant.number %>" required>
+      <input type="number" id="number" name="number" value="<%= plant.number %>" required> <br/>
+      <input type="text" id="name" name="name" value="<%= plant.name %>" required> <br/>
+      <input type="text" id="summerlocation" name="summerLocation" value="<%= plant.summer_location %>" required> <br/>
+      <input type="text" id="schooltimelocation" name="schooltimeLocation" value="<%= plant.schooltime_location %>" required> <br/>
+      <input type="number" id="frequency" name="frequency" value="<%= plant.frequency %>" required> <br/>
+      <input type="submit" value="Iesniegt">
+    </form>
+    <a href="/plants/<%= plant.plant_id %>">Atgriezties auga lapā</a>
+    <script>
+    fetch('/user')
+    .then(response => response.json())
+    .then(data => {
+      const usernameShower = document.getElementById('usern-shower');
+      if (data.admin) {
+        usernameShower.innerHTML = `Logged in as ${data.username} (admin)`;
+        editButton.style.display = "inline";
+      } else {
+        usernameShower.innerHTML = `Logged in as ${data.username}`;
+      }
+    })
+    .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>

@@ -13,11 +13,11 @@
     <div>
       <h2>Pievienot augu</h2>
       <form action="/newplant" method="post">
-          <input type="number" id="number" name="number">
-          <input type="text" id="name" name="name" placeholder="">
-          <input type="text" id="summerlocation" name="summerLocation" placeholder="">
-          <input type="text" id="schooltimelocation" name="schooltimeLocation" placeholder="">
-          <input type="number" id="frequency" name="frequency">
+          <input type="number" id="number" name="number" required>
+          <input type="text" id="name" name="name" placeholder="" required>
+          <input type="text" id="summerlocation" name="summerLocation" placeholder="" required>
+          <input type="text" id="schooltimelocation" name="schooltimeLocation" placeholder="" required>
+          <input type="number" id="frequency" name="frequency" required>
           <input type="submit" id="submit" value="Pievienot augu">
       </form>
     </div>
@@ -43,7 +43,12 @@
         .then(response => response.json())
         .then(data => {
           const usernameShower = document.getElementById('usern-shower');
-          usernameShower.innerHTML = `Logged in as ${data.username}`;
+          if (data.admin) {
+            usernameShower.innerHTML = `Logged in as ${data.username} (admin)`;
+            editButton.style.display = "inline";
+          } else {
+            usernameShower.innerHTML = `Logged in as ${data.username}`;
+          }
         })
         .catch(error => console.error('Error:', error));
     </script>

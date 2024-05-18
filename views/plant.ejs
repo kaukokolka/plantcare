@@ -8,10 +8,12 @@
     <a href="/logout">iziet</a>
     <a href="/">Atgriezties augu sarakstā</a>
     <h1>Hello, I am <%= plant.name %>!</h1>
+    <p>Plant Number: <%= plant.number %></p>
     <p>Plant Name: <%= plant.name %></p>
     <p>Summer Location: <%= plant.summer_location %></p>
     <p>Schooltime Location: <%= plant.schooltime_location %></p>
     <p>Watering Frequency: <%= plant.frequency %></p>
+    <a href="/plants/<%= plant.plant_id %>/edit" id="editButton" style="display: none;">Rediģēt augu</a>
     <form action="/newlog" method="post">
         <input type="hidden" name="plantId" value="<%= plant.plant_id %>">
         <select id="logtype" name="logType">
@@ -36,7 +38,13 @@
     .then(response => response.json())
     .then(data => {
       const usernameShower = document.getElementById('usern-shower');
-      usernameShower.innerHTML = `Logged in as ${data.username}`;
+      const editButton = document.getElementById('editButton')
+      if (data.admin) {
+        usernameShower.innerHTML = `Logged in as ${data.username} (admin)`;
+        editButton.style.display = "inline";
+      } else {
+        usernameShower.innerHTML = `Logged in as ${data.username}`;
+      }
     })
     .catch(error => console.error('Error:', error));
     </script>
