@@ -293,7 +293,7 @@ app.get('/plants/:id/edit', requireAuth, requireAdmin, (req,res) => { //dynamica
 });
 
 app.get('/data', requireAuth, (req, res) => { //for fetching the entire plant data.
-    db.all('SELECT * FROM Plants', (err, rows) => {
+    db.all('SELECT * FROM Plants ORDER BY number ASC', (err, rows) => {
         if (err) {
             console.error(err.message);
             res.status(500).send('Internal Server Error');
