@@ -38,10 +38,10 @@
     .then(data => {
       const usernameShower = document.getElementById('usern-shower');
       if (data.admin) {
-        usernameShower.innerHTML = `Logged in as ${data.username} (admin)`;
+        usernameShower.innerHTML = `Lietotājs: ${data.username} (admin)`;
         editButton.style.display = "inline";
       } else {
-        usernameShower.innerHTML = `Logged in as ${data.username}`;
+        usernameShower.innerHTML = `Lietotājs: ${data.username}`;
       }
     })
     .catch(error => console.error('Error:', error));

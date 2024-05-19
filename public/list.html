@@ -58,6 +58,7 @@
             const td5 = document.createElement('td');
             const td6 = document.createElement('td');
             const a = document.createElement('a');
+            const b = document.createElement('b');
             td1.textContent = `${item.number}`;
             td2.textContent = `${item.name}`;
             td3.textContent = `${item.schooltime_location}`;
@@ -67,7 +68,8 @@
             } else if (item.days_until_watering == 1) {
               td5.textContent = `Jālaista rīt`;
             } else {
-              td5.textContent = `Šodien jālaista`;
+              td5.textContent = ``;
+              b.textContent = `Šodien jālaista`;
             }
             a.innerHTML = 'Apskatīt';
             a.href = `/plants/${item.plant_id}`;
@@ -78,6 +80,7 @@
             tr.appendChild(td4);
             tr.appendChild(td5);
             tr.appendChild(td6);
+            td5.appendChild(b);
             td6.appendChild(a);
           });
         })
