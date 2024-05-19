@@ -1,23 +1,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Plant info</title>
+    <title>Auga rediģēšana</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <span id="usern-shower">Logged in as </span>
-    <a href="/logout">iziet</a>
-    <a href="/">Atgriezties augu sarakstā</a>
-    <h1>Rediģēt augu "<%= plant.name %>"</h1>
-    <form action="/editplant" method="post">
-      <input type="hidden" name="plantId" value="<%= plant.plant_id %>" required>
-      <input type="hidden" name="oldNumber" value="<%= plant.number %>" required>
-      <input type="number" id="number" name="number" value="<%= plant.number %>" required> <br/>
-      <input type="text" id="name" name="name" value="<%= plant.name %>" required> <br/>
-      <input type="text" id="summerlocation" name="summerLocation" value="<%= plant.summer_location %>" required> <br/>
-      <input type="text" id="schooltimelocation" name="schooltimeLocation" value="<%= plant.schooltime_location %>" required> <br/>
-      <input type="number" id="frequency" name="frequency" value="<%= plant.frequency %>" required> <br/>
-      <input type="submit" value="Iesniegt">
-    </form>
+  <header>
+    <h1 class="logo">Plantcare</h1>
+    <div class="underheader">
+      <a href="/" class="header-element">Atgriezties augu sarakstā</a>
+      <span id="usern-shower" class="header-element">Lietotājs: </span>
+      <a href="/logout" class="header-element">iziet</a>
+    </div>
+  </header>
+    <div class="form">
+      <h1>Rediģēt augu "<%= plant.name %>"</h1>
+      <form action="/editplant" method="post">
+        <input type="hidden" name="plantId" value="<%= plant.plant_id %>" required>
+        <input type="hidden" name="oldNumber" value="<%= plant.number %>" required>
+        <label for="number">Numurs:</label> <br/>
+        <input type="number" id="number" name="number" value="<%= plant.number %>" required> <br/>
+        <label for="number">Nosaukums:</label> <br/>
+        <input type="text" id="name" name="name" value="<%= plant.name %>" required> <br/>
+        <label for="number">Atrašanās vieta mācību laikā:</label> <br/>
+        <input type="text" id="schooltimelocation" name="schooltimeLocation" value="<%= plant.schooltime_location %>" required> <br/>
+        <label for="number">Atrašanās vieta vasarā:</label> <br/>
+        <input type="text" id="summerlocation" name="summerLocation" value="<%= plant.summer_location %>" required> <br/>
+        <label for="number">Laistīšanas biežums:</label> <br/>
+        <input type="number" id="frequency" name="frequency" value="<%= plant.frequency %>" required> <br/>
+        <input type="submit" value="Iesniegt">
+      </form>
+    </div>
     <a href="/plants/<%= plant.plant_id %>">Atgriezties auga lapā</a>
     <script>
     fetch('/user')

@@ -1,5 +1,4 @@
 var fs = require('fs');
-var datpix = require('./module.js');
 var yuri = require('url');
 var path = require('path');
 var sqlite3 = require('sqlite3').verbose();
@@ -14,7 +13,7 @@ app.use(express.json());
 
 //./run.sh
 
-const db = new sqlite3.Database('./config/plantcarebook.db');
+const db = new sqlite3.Database('./config/plantcarebook.db'); //šeit iestatīt datubāzes lokāciju
 
 app.use(session({
     secret: 'secret-key',
@@ -55,8 +54,10 @@ const requireAdmin = (req, res, next) => {
     });
   };
 
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+
 app.get('/', requireAuth, function (req, res) {
-    res.sendFile(path.join(__dirname, 'public', 'datatest.html'));
+    res.sendFile(path.join(__dirname, 'public', 'list.html'));
  });
 
 app.get('/login', requireNoAuth, function (req, res) {
@@ -270,20 +271,14 @@ app.get('/plants/:id', requireAuth, (req,res) => { //dinamiski renderēt auga in
             return;
         }
         console.log('id: success!')
-        db.all('SELECT * FROM Logs WHERE plant_id = ?', [plantId], (err, logs) => {
+        db.all('SELECT * FROM Logs WHERE plant_id = ? ORDER BY time DESC', [plantId], (err, logs) => { //paņemt visus pastāvošos ierakstus(veiktās darbības) par augu
             if (err) {
                 console.error(err.message);
                 res.status(500).send('Internal Server Error');
                 return;
             }
-            logs.forEach(log => { //formatēt laiku uz lasāmu formātu no dbāzē glabātā UNIX formāta
-              var properTime = parseFloat(log.time); //pārvērst uz pieņemamu formātu no string
-              var date = new Date(properTime); //veido date objektu
-              var year = date.getFullYear();
-              var month = String(date.getMonth() + 1).padStart(2, '0'); // Mēnešī sākas no 0 tapēc +1
-              var day = String(date.getDate()).padStart(2, '0');
-              console.log(year, month, day);
-              log.formattedTime = `${year}-${month}-${day}`; //šo var ievietot EJS ar log.formattedTime
+            logs.forEach(log => {
+              log.formattedTime = formatTime(log.time); //izsauc funkciju laika formatēšanai, šo var ievietot EJS ar log.formattedTime
             });
             console.log('logs: success!')
             res.render('plant.ejs', { logs: logs, plant: row });
@@ -313,24 +308,60 @@ app.get('/data', requireAuth, (req, res) => { //lai ienestu visu augu(Plants) ta
     db.all('SELECT * FROM Plants ORDER BY number ASC', (err, rows) => {
         if (err) {
             console.error(err.message);
-            res.status(500).send('Internal Server Error');
-        } else {
-            // Sūtīt JSON atbildi ar fetched datiem
-            res.setHeader('Content-Type', 'application/json');
-            res.json(rows);
+            return res.status(500).send('Internal Server Error');
         }
+        const promises = rows.map(row => { //Izveidot solījumu masīvu, lai asinhroniski veikt pieprasījumus "last_water_date"
+            return new Promise((resolve, reject) => {
+                db.get('SELECT MAX(time) AS last_water_time FROM Logs WHERE plant_id = ? AND type = ?', [row.plant_id, 'Laistīšana'], (err, log) => {
+                    if (err) {
+                        console.error('Error executing query:', err);
+                        return reject(err);
+                    }
+                    row.last_water_date = formatTime(log.last_water_time);
+                    row.days_until_watering = daysUntilWatering(row.last_water_date, row.frequency);
+                    resolve(row);
+                });
+            });
+        });
+        Promise.all(promises) // Izpildīt kad visi solījumi tikuši izpildīti jeb visas rindas tika pieprasītas
+            .then(updatedRows => {
+                res.setHeader('Content-Type', 'application/json');
+                res.json(updatedRows);
+            })
+            .catch(err => {
+                console.error('Error processing rows:', err);
+                res.status(500).send('Internal Server Error');
+            });
     });
 });
 
 app.get('/laistiishana', (req, res) => {
-  db.get('SELECT MAX(time) AS last_cits_date FROM Logs WHERE plant_id = ? AND type = ?', [1, 'Cits'], (err, row) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return;
-    }
-    console.log('Last cits date:', row.last_cits_date);
-  });
+  const lastWater = '2024-05-19';
+  const frequency = 5;
+  console.log(daysUntilWatering(lastWater, frequency));
 });
+
+function daysUntilWatering(lastWateringDate, frequency) {
+    const lastWatering = new Date(lastWateringDate); //pārveidot iegūto pēdējo laistīšanas datumu par Date objektu
+    const nextWatering = new Date(lastWatering);
+    nextWatering.setDate(lastWatering.getDate() + frequency);
+    //izņemt dienas no pēdējā laistīšanas datuma, un pievienot laistīšanas biežumu(arī dienu skaits), iegūt datumu no šīs summas
+    const currentDate = new Date(); //tagadējais datums
+    currentDate.setHours(0, 0, 0, 0); // uzstādīt laiku uz 0 jo tikai ņem vērā dienas
+    const diffTime = nextWatering - currentDate; //atšķirības dienās (ms jo UNIX)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); //pārveidot ms uz dienām
+    return diffDays;
+}
+
+function formatTime(input) { //funkcija, lai formatētu laiku uz lasāmu formātu no dbāzē glabātā UNIX formāta
+  var properTime = parseFloat(input); //pārvērst uz pieņemamu formātu no string
+  var date = new Date(properTime); //veido date objektu
+  var year = date.getFullYear();
+  var month = String(date.getMonth() + 1).padStart(2, '0'); // Mēnešī sākas no 0 tapēc +1
+  var day = String(date.getDate()).padStart(2, '0');
+  console.log(year, month, day);
+  return `${year}-${month}-${day}`; //šo var ievietot EJS ar log.formattedTime
+}
 
 function isAlphaNumeric(input) { //ievades atbilstība zemāk dotam regex, burtciparu simboli
   const regex = /^[a-zA-Z0-9]+$/;

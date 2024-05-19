@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <title>Login Plantcare</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<div style="width:200px; margin: auto;">
-    <h1>Pieslēgties</h1>
-    <form action="/validate" method="post" style="width: 180px; margin: auto;">
-        <label for="username">Lietotājvārds:</label>
+<div style="width:200px; margin: auto;" class="form">
+    <h1 style="margin-top: 0;">Pieslēgties</h1>
+    <form action="/validate" method="post" style="width: 280px; margin: auto;">
+        <label for="username">Lietotājvārds:</label> <br/>
         <input type="text" id="username" name="username" placeholder="Username" required> <br/>
-        <label for="password">Parole:</label>
-        <input type="password" id="password" name="password" placeholder="Password" required>
+        <label for="password">Parole:</label> <br/>
+        <input type="password" id="password" name="password" placeholder="Password" required> <br/>
         <input type="submit" value="Iesniegt" style="margin: 10px 0;">
-        <p id="validation" style="color:green; display:none;">User is validated!</p>
-        <p id="invalidation" style="color:red; display:none;">Incorrect username or password</p>
     </form>
-    <a href="/register">izveidot kontu</a>
+    <a href="/register">Izveidot kontu</a>
 </div>

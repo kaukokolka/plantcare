@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Augu saraksts</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+    </style>
+</head>
+<body>
+    <header>
+      <h1 class="logo">Plantcare</h1>
+      <div class="underheader">
+        <span id="usern-shower" class="header-element">Lietotājs: </span>
+        <a href="/logout" class="header-element">iziet</a>
+      </div>
+    </header>
+    <h1>Augu saraksts</h1>
+    <div id="newPlantUI" style="display: none" class="form">
+      <h2 style="margin-top: 0;">Pievienot augu</h2>
+      <form action="/newplant" method="post">
+          <label for="number">Numurs:</label> <br/>
+          <input type="number" id="number"  name="number" required> <br/>
+          <label for="name">Nosaukums:</label> <br/>
+          <input type="text" id="name" name="name" required> <br/>
+          <label for="schooltimelocation">Atrašanās vieta mācību laikā:</label> <br/>
+          <input type="text" id="schooltimelocation" name="schooltimeLocation" required> <br/>
+          <label for="summerlocation">Atrašanās vieta vasarā:</label> <br/>
+          <input type="text" id="summerlocation" name="summerLocation" required> <br/>
+          <label for="frequency">Laistīšanas biežums:</label> <br/>
+          <input type="number" id="frequency" name="frequency" required> <br/>
+          <input type="submit" id="submit" value="Pievienot augu">
+      </form>
+    </div>
+    <table id="data-table">
+      <tr>
+        <th>Numurs</th>
+        <th>Nosaukums</th>
+        <th>Atrašanās vieta mācību laikā</th>
+        <th>Atrašanās vieta vasarā</th>
+        <th>Statuss</th>
+        <th>Saite</th>
+      </tr>
+    </table>
+    <script>
+        // Fetch data from server and populate the HTML page
+        fetch('/data')
+        .then(response => response.json())
+        .then(data => {
+          const dataTable = document.getElementById('data-table');
+          data.forEach(item => {
+            const tr = document.createElement('tr');
+            const td1 = document.createElement('td');
+            const td2 = document.createElement('td');
+            const td3 = document.createElement('td');
+            const td4 = document.createElement('td');
+            const td5 = document.createElement('td');
+            const td6 = document.createElement('td');
+            const a = document.createElement('a');
+            td1.textContent = `${item.number}`;
+            td2.textContent = `${item.name}`;
+            td3.textContent = `${item.schooltime_location}`;
+            td4.textContent = `${item.summer_location}`;
+            if (item.days_until_watering > 1) {
+              td5.textContent = `Jālaista pēc ${item.days_until_watering} dienām`;
+            } else if (item.days_until_watering == 1) {
+              td5.textContent = `Jālaista rīt`;
+            } else {
+              td5.textContent = `Šodien jālaista`;
+            }
+            a.innerHTML = 'Apskatīt';
+            a.href = `/plants/${item.plant_id}`;
+            dataTable.appendChild(tr);
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            tr.appendChild(td4);
+            tr.appendChild(td5);
+            tr.appendChild(td6);
+            td6.appendChild(a);
+          });
+        })
+        .catch(error => console.error('Error:', error));
+        fetch('/user')
+        .then(response => response.json())
+        .then(data => {
+          const usernameShower = document.getElementById('usern-shower');
+          if (data.admin) {
+            usernameShower.innerHTML = `Lietotājs: ${data.username} (admin)`;
+            newPlantUI.style.display = "block";
+          } else {
+            usernameShower.innerHTML = `Lietotājs: ${data.username}`;
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>

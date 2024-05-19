@@ -1,29 +1,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Plant info</title>
+    <title>Auga informācija</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <span id="usern-shower">Logged in as </span>
-    <a href="/logout">iziet</a>
-    <a href="/">Atgriezties augu sarakstā</a>
-    <h1>Hello, I am <%= plant.name %>!</h1>
-    <p>Plant Number: <%= plant.number %></p>
-    <p>Plant Name: <%= plant.name %></p>
-    <p>Summer Location: <%= plant.summer_location %></p>
-    <p>Schooltime Location: <%= plant.schooltime_location %></p>
-    <p>Watering Frequency: <%= plant.frequency %></p>
+  <header>
+    <h1 class="logo">Plantcare</h1>
+    <div class="underheader">
+      <a href="/" class="header-element">Atgriezties augu sarakstā</a>
+      <span id="usern-shower" class="header-element">Lietotājs: </span>
+      <a href="/logout" class="header-element">iziet</a>
+    </div>
+  </header>
+    <h1><%= plant.name %></h1>
+    <p><b>Numurs:</b> <%= plant.number %></p>
+    <p><b>Nosaukums:</b> <%= plant.name %></p>
+    <p><b>Atrašanās vieta mācību laikā:</b> <%= plant.schooltime_location %></p>
+    <p><b>Atrašanās vieta vasarā:</b> <%= plant.summer_location %></p>
+    <p><b>Laistīšanas biežums:</b> <%= plant.frequency %></p>
     <a href="/plants/<%= plant.plant_id %>/edit" id="editButton" style="display: none;">Rediģēt augu</a>
-    <form action="/newlog" method="post">
-        <input type="hidden" name="plantId" value="<%= plant.plant_id %>">
-        <select id="logtype" name="logType">
-            <option value="Laistīšana">Laistīšana</option>
-            <option value="Cits">Cits</option>
-        </select>
-        <input type="text" id="loginput" name="logInput" placeholder="Papildus informācija(nav obligāta)">
-        <input type="submit" id="submit" value="Iesniegt">
-    </form>
-    <h1>Logs for Plant: <%= plant.name %></h1>
+    <div class="form">
+      <h2 style="margin-top: 0;">Reģistrēt veiktu darbību</h2>
+      <form action="/newlog" method="post" style="margin: 0">
+          <input type="hidden" name="plantId" value="<%= plant.plant_id %>">
+          <select id="logtype" name="logType">
+              <option value="Laistīšana">Laistīšana</option>
+              <option value="Mēslošana">Mēslošana</option>
+              <option value="Cits">Cits</option>
+          </select>
+          <input type="text" id="loginput" name="logInput" placeholder="Papildus informācija(nav obligāta)">
+          <input type="submit" id="submit" value="Iesniegt">
+      </form>
+    </div>
+    <h2>Veiktās darbības</h2>
     <ul>
         <% logs.forEach(log => { %>
             <li>
