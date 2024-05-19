@@ -144,8 +144,8 @@ app.post('/newuser', (req, res) => { //Jauna lietotāja izveidei
 });
 
 app.post('/newlog', requireAuth, (req, res) => {
-    var timestamp = new Date().toISOString();
-    console.log(timestamp)
+    var timestamp = new Date();
+    console.log(timestamp);
     const userId = req.session.userId;
     console.log(userId);
     const { plantId, logType, logInput } = req.body;
@@ -165,6 +165,10 @@ app.post('/newplant', requireAuth, requireAdmin, (req, res) => {
     const { number, name, summerLocation, schooltimeLocation, frequency } = req.body;
     if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) { //vai nav tukšumu ar "  "
       res.status(400).send('Lūdzu aizpildiet visus laukumus, lai pievienotu augu.')
+      return;
+    }
+    if (isPos(frequency) == false) { //vai biežuma lauciņā nav ievadīts negatīvs skaitlis vai 0
+      res.status(400).send('Laistīšanas biežums var būt tikai pozitīvs skaitlis')
       return;
     }
     db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => {
@@ -189,34 +193,27 @@ app.post('/newplant', requireAuth, requireAdmin, (req, res) => {
     });
   });
 
-  app.post('/editplant', requireAuth, requireAdmin, (req, res) => { //auga datu rediģēšanai
-      const { plantId, oldNumber, number, name, summerLocation, schooltimeLocation, frequency } = req.body;
-      if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) {
-        res.status(400).send('Lūdzu aizpildiet visus laukumus, lai veiksmīgi rediģētu augu.')
-        return;
-      }
-      if (oldNumber != number) { //if number has been edited
-        db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => {
-          if (err) {
-            console.error('internal server error querying number:', err);
-            res.status(500).send('Internal Server Error'); //500 internal server error
-            return;
-          }
-          if (row) { //pārbauda vai rinda ar šādu numuru jau pastāv
-            res.status(400).send('Augs ar šādu numuru jau pastāv, lūdzu izvēlieties citu.')
-            return;
-          }
-          db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //rediģēt rindu dbāzē
-              if (err)  {
-                  console.error('internal server error after creating plant:', err);
-                  res.status(500).send('Internal Server Error'); //500 internal server error
-                  return;
-              }
-              console.log('Plant has been edited!'); // Log successful log creation attempt
-              res.redirect('/plants/' + plantId); //ielādet auga lapu atkal, jau ar jaunajiem datiem
-        });
-      });
-        } else {
+app.post('/editplant', requireAuth, requireAdmin, (req, res) => { //auga datu rediģēšanai
+    const { plantId, oldNumber, number, name, summerLocation, schooltimeLocation, frequency } = req.body;
+    if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) { //vai nav tukšumu ar "  "
+      res.status(400).send('Lūdzu aizpildiet visus laukumus, lai veiksmīgi rediģētu augu.')
+      return;
+    }
+    if (isPos(frequency) == false) { //vai biežuma lauciņā nav ievadīts negatīvs skaitlis vai 0
+      res.status(400).send('Laistīšanas biežums var būt tikai pozitīvs skaitlis')
+      return;
+    }
+    if (oldNumber != number) { //if number has been edited
+      db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => {
+        if (err) {
+          console.error('internal server error querying number:', err);
+          res.status(500).send('Internal Server Error'); //500 internal server error
+          return;
+        }
+        if (row) { //pārbauda vai rinda ar šādu numuru jau pastāv
+          res.status(400).send('Augs ar šādu numuru jau pastāv, lūdzu izvēlieties citu.')
+          return;
+        }
         db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //rediģēt rindu dbāzē
             if (err)  {
                 console.error('internal server error after creating plant:', err);
@@ -225,9 +222,20 @@ app.post('/newplant', requireAuth, requireAdmin, (req, res) => {
             }
             console.log('Plant has been edited!'); // Log successful log creation attempt
             res.redirect('/plants/' + plantId); //ielādet auga lapu atkal, jau ar jaunajiem datiem
-        });
-      }
+      });
     });
+      } else {
+      db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //rediģēt rindu dbāzē
+          if (err)  {
+              console.error('internal server error after creating plant:', err);
+              res.status(500).send('Internal Server Error'); //500 internal server error
+              return;
+          }
+          console.log('Plant has been edited!'); // Log successful log creation attempt
+          res.redirect('/plants/' + plantId); //ielādet auga lapu atkal, jau ar jaunajiem datiem
+      });
+    }
+  });
 
 app.get('/user', requireAuth, function (req, res) { //lai ienestu lietotāja datus, kur nepieciešams, sesijas laikā
     const userId = req.session.userId;
@@ -268,6 +276,15 @@ app.get('/plants/:id', requireAuth, (req,res) => { //dinamiski renderēt auga in
                 res.status(500).send('Internal Server Error');
                 return;
             }
+            logs.forEach(log => { //formatēt laiku uz lasāmu formātu no dbāzē glabātā UNIX formāta
+              var properTime = parseFloat(log.time); //pārvērst uz pieņemamu formātu no string
+              var date = new Date(properTime); //veido date objektu
+              var year = date.getFullYear();
+              var month = String(date.getMonth() + 1).padStart(2, '0'); // Mēnešī sākas no 0 tapēc +1
+              var day = String(date.getDate()).padStart(2, '0');
+              console.log(year, month, day);
+              log.formattedTime = `${year}-${month}-${day}`; //šo var ievietot EJS ar log.formattedTime
+            });
             console.log('logs: success!')
             res.render('plant.ejs', { logs: logs, plant: row });
         });
@@ -305,6 +322,16 @@ app.get('/data', requireAuth, (req, res) => { //lai ienestu visu augu(Plants) ta
     });
 });
 
+app.get('/laistiishana', (req, res) => {
+  db.get('SELECT MAX(time) AS last_cits_date FROM Logs WHERE plant_id = ? AND type = ?', [1, 'Cits'], (err, row) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return;
+    }
+    console.log('Last cits date:', row.last_cits_date);
+  });
+});
+
 function isAlphaNumeric(input) { //ievades atbilstība zemāk dotam regex, burtciparu simboli
   const regex = /^[a-zA-Z0-9]+$/;
   return regex.test(input);
@@ -317,6 +344,10 @@ function isAcceptable(input) { //ievades atbilstība zemāk dotam regex
 
 function isBlank(str) { //ievades pārbaude vai tajā ir tikai tukši simboli
    return str.trim().length === 0;
+}
+
+function isPos(num) { //skaitļa pārbaude vai ir pozitīvs
+  return num > 0;
 }
 
 function isSecure(input) { //pārbaude vai parole ir droša

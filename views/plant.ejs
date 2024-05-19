@@ -27,7 +27,7 @@
     <ul>
         <% logs.forEach(log => { %>
             <li>
-                <strong>Time:</strong> <%= log.time %><br>
+                <strong>Time:</strong> <%= log.formattedTime %><br>
                 <strong>Type:</strong> <%= log.type %><br>
                 <strong>Content:</strong> <%= log.content %>
             </li>
