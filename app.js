@@ -16,28 +16,26 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./config/plantcarebook.db');
 
-// const db = require('./config/db');  Require the database connection
-
 app.use(session({
     secret: 'secret-key',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } //CHANGE B4 PRODUCTION!!!
+    cookie: { secure: false } //CHANGE IF HTTPS ENABLED!!!
 }));
 
 const requireAuth = (req, res, next) => {
     if (req.session.userId) {
-        next(); // User is authenticated, continue to next middleware
+        next(); // Lietotājs ir autentificēts, turpiniet ar nākamo starpprogrammatūru
     } else {
-        res.redirect('/login'); // User is not authenticated, redirect to login page
+        res.redirect('/login'); // Lietotājs nav autentificēts, novirzīt uz pieslēgšanās lapu
     }
 }
 
 const requireNoAuth = (req, res, next) => {
     if (req.session.userId) {
-        res.redirect('/'); //User is authenticated, send to HOME page
+        res.redirect('/'); // Lietotājs ir autentificēts, novirzīt uz mājaslapu
     } else {
-        next(); // User isn't authenticated, may use login
+        next(); // Lietotājs nav autentificēts, turpināt ar nākamo starpprogrammatūru
     }
 }
 
@@ -50,9 +48,9 @@ const requireAdmin = (req, res, next) => {
         return;
       }
       if (!row) {
-          res.redirect('/'); //User isn't admin, send to homepage
+          res.redirect('/'); //Lietotājs nav administrators, sūtīt uz mājaslapu
       } else {
-          next(); // User is admin, may use page
+          next(); // Lietotājs ir administrators, turpināt ar nākamo starpprogrammatūru
       }
     });
   };
@@ -69,7 +67,7 @@ app.get('/register', requireNoAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
  });
 
-app.post('/validate', (req, res) => { //checks inputted data on whether such user exists and if so, starts a session for the user
+app.post('/validate', (req, res) => { //Verificēt vai ievadītie dati sakrīt ar kādu no pastāvošiem lietotājiem un uzsāk sesiju
     const { username } = req.body;
     const password = sha256(req.body.password);
     console.log(username, password);
@@ -82,17 +80,17 @@ app.post('/validate', (req, res) => { //checks inputted data on whether such use
         }
         if (!row) {
             console.log('Incorrect username or password');
-            res.status(401).send('Incorrect username or password'); //401 unauthorized
+            res.status(401).send('Nepareizs lietotājvārds vai parole'); //401 unauthorized
             return;
         }
         const userId = row.user_id;
         req.session.userId = userId;
-        console.log('User is validated!'); // Log successful login attempt
+        console.log('User is validated!'); // Lietotājs ir verificēts un sesija ir uzsākta
         res.redirect('/');
     });
 });
 
-app.get('/logout', (req, res) => {
+app.get('/logout', (req, res) => { //beigt sesiju
   req.session.destroy((err) => {
     if (err) {
       console.error('logout unsuccessful:', err);
@@ -100,34 +98,38 @@ app.get('/logout', (req, res) => {
       return;
     }
     res.redirect('/login');
-  }); //end session
+  });
 });
 
-app.post('/newuser', (req, res) => { //CHECK IF USERNAME EXISTS, +INCLUDE REPEAT-PASS, +CHECK SYMBOLS
+app.post('/newuser', (req, res) => { //Jauna lietotāja izveidei
     const { username, password, repeatPassword } = req.body;
-    db.get('SELECT 1 FROM Users WHERE username = ?', [username], (err, row) => { //check if username already exists
+    db.get('SELECT 1 FROM Users WHERE username = ?', [username], (err, row) => { //vaicājums datubāzei ievadītam lietotājvārdam
       if (err) {
         console.error('internal server error querying username:', err);
         res.status(500).send('Internal Server Error'); //500 internal server error
         return;
       }
-      if (row) { //check whether a row with such username already exists
-        res.status(400).send('Username already exists');
+      if (row) { //pārbauda vai lietotājvārds pastāv
+        res.status(400).send('Šāds lietotājvārds jau pastāv. Lūdzu, izvēlieties citu lietotājvārdu.');
         return;
       }
-      if (isAlphaNumeric(username) == false) { //check whether username only includes allowed symbols
-        res.status(400).send('Username includes unpermitted symbols. Please only use alphanumeric symbols(a-z, A-Z, 0-9)');
+      if (isAlphaNumeric(username) == false) { //pārbauda vai lietotājvārdā ievietoti neatļauti simboli
+        res.status(400).send('Lietotājvārds ietver neatļautus simbolus. Lūdzu, izmantojiet tikai burtciparu simbolus (a-z, A-Z, 0-9)');
         return;
       } //Username OK, move on
-      if (password !== repeatPassword) { //check whether password fields match
-        res.status(400).send('Passwords do not match');
+      if (password !== repeatPassword) { //pārbauda vai paroļu laukumi sakrīt
+        res.status(400).send('Paroles nesakrīt');
         return;
       }
-      if (isAcceptable(password) == false) { //check whether password only includes allowed symbols
-        res.status(400).send('Password includes unpermitted symbols. Please only use alphanumeric symbols(a-z, A-Z, 0-9) and common special symbols(#?!@$%^&-*)');
+      if (isSecure(password) == false) { //pārbauda vai parole pietiekami droša
+        res.status(400).send('Parole neatbilst nosacījumiem. Lūdzu, ievadiet vismaz 6 simbolus un ievietojat vismaz 1 burtu(a-z, A-Z), 1 ciparu(0-9) un 1 īpašo simbolu(#?!@$%^&-*).');
+        return;
+      }
+      if (isAcceptable(password) == false) { //pārbauda vai parolē ievietoti neatļauti simboli
+        res.status(400).send('Parole ietver neatļautus simbolus. Lūdzu, izmantojiet tikai burtciparu simbolus (a-z, A-Z, 0-9) un biežāk lietojamos īpašos simbolus(#?!@$%^&-*)');
         return;
       } //Password OK, move on
-      const hashedPassword = sha256(password); //hash before inserting
+      const hashedPassword = sha256(password); //hešo paroli pirms ievietošanas datubāzē
       console.log(username, hashedPassword);
       db.run('INSERT INTO Users(username, password) VALUES(?, ?)', [username, hashedPassword], function(err) { //create new row(user) in db
           if (err)  {
@@ -148,31 +150,30 @@ app.post('/newlog', requireAuth, (req, res) => {
     console.log(userId);
     const { plantId, logType, logInput } = req.body;
     console.log(plantId, logType, logInput);
-      db.run('INSERT INTO Logs(plant_id, user_id, time, type, content) VALUES(?, ?, ?, ?, ?)', [plantId, userId, timestamp, logType, logInput], function(err) { //create new row(log) in db
+      db.run('INSERT INTO Logs(plant_id, user_id, time, type, content) VALUES(?, ?, ?, ?, ?)', [plantId, userId, timestamp, logType, logInput], function(err) { //izveidot jaunu rindu dbāzē
           if (err)  {
               console.error('internal server error after creating log:', err);
               res.status(500).send('Internal Server Error'); //500 internal server error
               return;
           }
           console.log('Log is created!'); // Log successful log creation attempt
-          res.redirect('/plants/' + plantId); //reload back into page, now with the new log
+          res.redirect('/plants/' + plantId); //ielādet lapu atkal, jau ar jaunajiem datiem
       });
     });
 
 app.post('/newplant', requireAuth, requireAdmin, (req, res) => {
     const { number, name, summerLocation, schooltimeLocation, frequency } = req.body;
-    if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) {
+    if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) { //vai nav tukšumu ar "  "
       res.status(400).send('Lūdzu aizpildiet visus laukumus, lai pievienotu augu.')
       return;
     }
-    console.log("all isBlanks False: ", name, summerLocation, schooltimeLocation, frequency);
-    db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => { //check if username already exists
+    db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => {
       if (err) {
         console.error('internal server error querying number:', err);
         res.status(500).send('Internal Server Error'); //500 internal server error
         return;
       }
-      if (row) { //check whether a row with such number already exists
+      if (row) { //pārbauda vai augs ar šādu numuru jau pastāv
         res.status(400).send('Augs ar šādu numuru jau pastāv, lūdzu izvēlieties citu.')
         return;
       }
@@ -183,53 +184,52 @@ app.post('/newplant', requireAuth, requireAdmin, (req, res) => {
               return;
           }
           console.log('Plant is created!'); // Log successful log creation attempt
-          res.redirect('/'); //reload back into page, now with the new log
+          res.redirect('/'); //ielādet lapu atkal, jau ar jaunajiem datiem
       });
     });
   });
 
-  app.post('/editplant', requireAuth, requireAdmin, (req, res) => {
+  app.post('/editplant', requireAuth, requireAdmin, (req, res) => { //auga datu rediģēšanai
       const { plantId, oldNumber, number, name, summerLocation, schooltimeLocation, frequency } = req.body;
       if (isBlank(number) || isBlank(name) || isBlank(summerLocation) || isBlank(schooltimeLocation) || isBlank(frequency)) {
         res.status(400).send('Lūdzu aizpildiet visus laukumus, lai veiksmīgi rediģētu augu.')
         return;
       }
-      console.log("all isBlanks False: ", name, summerLocation, schooltimeLocation, frequency);
       if (oldNumber != number) { //if number has been edited
-        db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => { //check if the new number is already taken by another plant
+        db.get('SELECT 1 FROM Plants WHERE number = ?', [number], (err, row) => {
           if (err) {
             console.error('internal server error querying number:', err);
             res.status(500).send('Internal Server Error'); //500 internal server error
             return;
           }
-          if (row) { //check whether a row with such number already exists
+          if (row) { //pārbauda vai rinda ar šādu numuru jau pastāv
             res.status(400).send('Augs ar šādu numuru jau pastāv, lūdzu izvēlieties citu.')
             return;
           }
-          db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //create new row(log) in db
+          db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //rediģēt rindu dbāzē
               if (err)  {
                   console.error('internal server error after creating plant:', err);
                   res.status(500).send('Internal Server Error'); //500 internal server error
                   return;
               }
               console.log('Plant has been edited!'); // Log successful log creation attempt
-              res.redirect('/plants/' + plantId); //reload back into page, now with the edited plant
+              res.redirect('/plants/' + plantId); //ielādet auga lapu atkal, jau ar jaunajiem datiem
         });
       });
         } else {
-        db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //create new row(log) in db
+        db.run('UPDATE Plants SET number = ?,name = ?, summer_location = ?, schooltime_location = ?, frequency = ? WHERE plant_id = ?', [number, name, summerLocation, schooltimeLocation, frequency, plantId], function(err) { //rediģēt rindu dbāzē
             if (err)  {
                 console.error('internal server error after creating plant:', err);
                 res.status(500).send('Internal Server Error'); //500 internal server error
                 return;
             }
             console.log('Plant has been edited!'); // Log successful log creation attempt
-            res.redirect('/plants/' + plantId); //reload back into page, now with the edited plant
+            res.redirect('/plants/' + plantId); //ielādet auga lapu atkal, jau ar jaunajiem datiem
         });
       }
     });
 
-app.get('/user', requireAuth, function (req, res) { //for fetching user data. to be used during active session
+app.get('/user', requireAuth, function (req, res) { //lai ienestu lietotāja datus, kur nepieciešams, sesijas laikā
     const userId = req.session.userId;
     db.get('SELECT * FROM Users WHERE user_id = ?', [userId], (err, row) => {
         if (err) {
@@ -248,7 +248,7 @@ app.get('/user', requireAuth, function (req, res) { //for fetching user data. to
     });
 });
 
-app.get('/plants/:id', requireAuth, (req,res) => { //dynamically render EJS template about plant when requested
+app.get('/plants/:id', requireAuth, (req,res) => { //dinamiski renderēt auga informācijas EJS veidni, kad tas tiek pieprasīts
     const plantId = req.params.id;
     db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
         if (err) {
@@ -274,7 +274,7 @@ app.get('/plants/:id', requireAuth, (req,res) => { //dynamically render EJS temp
     });
 });
 
-app.get('/plants/:id/edit', requireAuth, requireAdmin, (req,res) => { //dynamically render EJS template about plant when requested
+app.get('/plants/:id/edit', requireAuth, requireAdmin, (req,res) => { //dinamiski renderēt auga rediģēšanas EJS veidni, kad tas tiek pieprasīts
     const plantId = req.params.id;
     db.get('SELECT * FROM Plants WHERE plant_id = ?', [plantId], (err, row) => {
         if (err) {
@@ -292,34 +292,45 @@ app.get('/plants/:id/edit', requireAuth, requireAdmin, (req,res) => { //dynamica
     });
 });
 
-app.get('/data', requireAuth, (req, res) => { //for fetching the entire plant data.
+app.get('/data', requireAuth, (req, res) => { //lai ienestu visu augu(Plants) tabulu
     db.all('SELECT * FROM Plants ORDER BY number ASC', (err, rows) => {
         if (err) {
             console.error(err.message);
             res.status(500).send('Internal Server Error');
         } else {
-            // Send JSON response with fetched data
+            // Sūtīt JSON atbildi ar fetched datiem
             res.setHeader('Content-Type', 'application/json');
             res.json(rows);
         }
     });
 });
 
-function isAlphaNumeric(input) {
+function isAlphaNumeric(input) { //ievades atbilstība zemāk dotam regex, burtciparu simboli
   const regex = /^[a-zA-Z0-9]+$/;
   return regex.test(input);
 }
 
-function isAcceptable(input) {
+function isAcceptable(input) { //ievades atbilstība zemāk dotam regex
   const regex = /^[a-z0-9#?!@$%^&\-*]+$/i; //a-z0-9#?!@$%^&-*
   return regex.test(input);
 }
 
-function isBlank(str) {
+function isBlank(str) { //ievades pārbaude vai tajā ir tikai tukši simboli
    return str.trim().length === 0;
 }
 
-function sha256(hashable) {
+function isSecure(input) { //pārbaude vai parole ir droša
+  const regexAlpha = /[a-z]/i;
+  const regexNum = /[0-9]/;
+  const regexSp = /[#?!@$%^&\-*]/;
+  if (input.length >= 6 && regexAlpha.test(input) && regexNum.test(input) && regexSp.test(input)) {
+      return true;
+  } else {
+      return false;
+  }
+}
+
+function sha256(hashable) { //jaucējparoles izveide
   return crypto.createHash('sha256').update(hashable).digest('hex');
 }
 
